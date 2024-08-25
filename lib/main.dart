@@ -27,9 +27,22 @@ class MyApp extends StatelessWidget {
 
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
+  var favourite = WordPair;
+  var wordList = <WordPair>[];
 
   void getNext() {
+    wordList.insert(0, current);
     current = WordPair.random();
+    notifyListeners();
+  }
+
+  void clearList() {
+    wordList = <WordPair>[];
+    notifyListeners();
+  }
+
+  void removeFromFavourites(favourite) {
+    favorites.remove(favourite);
     notifyListeners();
   }
 
@@ -110,12 +123,6 @@ class FavoritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
-    final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!.copyWith(
-      letterSpacing: 20,
-      color: theme.colorScheme.onPrimary,
-    );
-
     if (appState.favorites.isEmpty) {
       return Center(
         child: Text('No favorites yet.'),
@@ -134,7 +141,13 @@ class FavoritesPage extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.favorite),
             title: Text(fav.asLowerCase),
+            trailing: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                appState.removeFromFavourites(fav);
+              },
           ),
+          )
       ],
     );
   }
@@ -157,6 +170,8 @@ class GeneratorPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          FavouriteRevertList(),
+          SizedBox(height: 10),
           BigCard(pair: pair),
           SizedBox(height: 10),
           Row(
@@ -176,11 +191,68 @@ class GeneratorPage extends StatelessWidget {
                 },
                 child: Text('Next'),
               ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  appState.clearList();
+                },
+                child: Text('Clear'),
+              ),
             ],
           ),
         ],
       ),
     );
+  }
+}
+
+class FavouriteRevertList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    // final theme = Theme.of(context);
+    // final style = theme.textTheme.bodySmall!.copyWith(
+    //   color: theme.colorScheme.onPrimary,
+    // );
+    var wordList = appState.wordList;
+
+    if (wordList.isEmpty) {
+      return Center(
+        child: Text('No words'),
+      );
+    }
+
+    Icon AddFavouriteIcon(WordPair word) {
+      if (appState.favorites.contains(word)) {
+        return Icon(Icons.favorite);
+      } else {
+        return Icon(null);
+      }
+    }
+
+    return Container(
+        alignment: Alignment.center,
+        child: SizedBox.square(
+            dimension: 200,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ListView(
+                  //shrinkWrap: true,
+                  reverse: true,
+                  // physics: a,
+                  children: [
+                    for (var addedWord in wordList)
+                      ListTile(
+                        leading: AddFavouriteIcon(addedWord),
+                        title: Text(
+                          addedWord.asLowerCase,
+                          //  style: style,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            )));
   }
 }
 
